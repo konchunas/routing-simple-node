@@ -53,10 +53,15 @@ fn main() {
     node.run();
 }
 
-fn create_example_transfer(amount_string: &String)
+fn create_example_transfer(node: &mut Node, amount_string: &String)
 {
     let amount = amount_string.parse::<u64>().unwrap();
-    transfer::create_example(amount);
+    let transfer = transfer::create_example(amount);
+    match transfer
+    {
+        Ok(bytes) => send_a_message(node, &bytes),
+        Err(e) => error!("IO error when creating transfer {:?}", e)
+    }
 }
 
 fn send_a_message_string(node: &mut Node, message: &String)
@@ -172,7 +177,7 @@ impl ExampleNode {
                     match command.as_ref()
                     {
                         "send" => send_a_message_string(&mut self.node, &args[0]),
-                        "transfer" => create_example_transfer(&args[0]),
+                        "transfer" => create_example_transfer(&mut self.node, &args[0]),
                         _ => { info!("No such command") }
                     }
                 }
