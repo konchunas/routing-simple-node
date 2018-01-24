@@ -4,6 +4,7 @@ extern crate lru_time_cache;
 extern crate maidsafe_utilities;
 extern crate env_logger;
 extern crate shrust;
+extern crate capnp;
 
 #[macro_use] extern crate log;
 #[macro_use] extern crate unwrap;
@@ -24,6 +25,7 @@ use std::io::Write;
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, TryRecvError};
 
+mod transactions; use transactions::transfer;
 
 type CommandAndArgs = (String, Vec<String>);
 
@@ -49,6 +51,12 @@ fn main() {
     
     let mut node = ExampleNode::new(first_node);
     node.run();
+}
+
+fn create_example_transfer(amount_string: &String)
+{
+    let amount = amount_string.parse::<u64>().unwrap();
+    transfer::create_example(amount);
 }
 
 fn send_a_message_string(node: &mut Node, message: &String)
@@ -96,6 +104,7 @@ fn create_shell(first_node: bool) -> Receiver<CommandAndArgs>
         Ok(())
     });
     shell.new_command("send", "Send a message", 1, |_, sender, args| { handle_cli_command(String::from("send"), sender, args); Ok(()) });
+    shell.new_command("transfer", "Transfer some money", 1, |_, sender, args| { handle_cli_command(String::from("transfer"), sender, args); Ok(()) });
 
     let serv = TcpListener::bind(String::from("0.0.0.0:") + port).expect("Cannot open socket");
     serv.set_nonblocking(true).expect("Cannot set non-blocking");
@@ -163,6 +172,7 @@ impl ExampleNode {
                     match command.as_ref()
                     {
                         "send" => send_a_message_string(&mut self.node, &args[0]),
+                        "transfer" => create_example_transfer(&args[0]),
                         _ => { info!("No such command") }
                     }
                 }
