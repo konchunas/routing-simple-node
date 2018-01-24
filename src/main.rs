@@ -146,6 +146,19 @@ pub struct ExampleNode {
     input_listener: Option<Receiver<CommandAndArgs>>
 }
 
+pub trait TransactionHandler
+{
+    fn handle_transaction(&mut self, bytes: &Vec<u8>);
+}
+
+impl TransactionHandler for Node
+{
+    fn handle_transaction(&mut self, bytes: &Vec<u8>)
+    {
+        transfer::try_handle(bytes);
+    }
+}
+
 impl ExampleNode {
     /// Creates a new node and attempts to establish a connection to the network.
     pub fn new(first: bool) -> ExampleNode {
@@ -355,6 +368,7 @@ impl ExampleNode {
                 if self.request_cache.insert(msg_id, (dst, src)).is_none() {
                     let src = dst;
                     let dst = Authority::NaeManager(*data.name());
+                    self.node.handle_transaction(data.value());
                     unwrap!(self.node.send_put_idata_request(src, dst, data, msg_id));
                 } else {
                     warn!("Attempt to reuse message ID {:?}.", msg_id);

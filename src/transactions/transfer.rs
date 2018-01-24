@@ -2,6 +2,7 @@ include!("./transfer_capnp.rs");
 use capnp::serialize_packed;
 use capnp::message;
 use std::io;
+use std::io::Cursor;
 
 pub fn create_example(amount: u64) -> io::Result<Vec<u8>>
 {
@@ -20,4 +21,13 @@ pub fn create_example(amount: u64) -> io::Result<Vec<u8>>
         Ok(_) => Ok(buffer),
         Err(e) => Err(e),
     }
+}
+
+pub fn try_handle(bytes: &Vec<u8>) -> ::capnp::Result<()> 
+{
+    let mut buff = Cursor::new(bytes);
+    let message_reader = try!(serialize_packed::read_message(&mut buff, ::capnp::message::ReaderOptions::new()));
+    let transfer = try!(message_reader.get_root::<transfer::Reader>());
+    info!("received transfer with amount: {:?}", transfer.get_amount());
+    Ok(())
 }
